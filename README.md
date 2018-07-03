@@ -1,6 +1,8 @@
 # 2D Character Controller
 Here is a free to use Character Controller for 2D platformer games in Unity.
 
+![Image of Sunny Land from the Asset Store](http://i.imgur.com/ni1t2Wq.jpg)
+
 Currently the Controller features:
 
 - Smooth movement
