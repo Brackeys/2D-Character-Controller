@@ -60,8 +60,8 @@ public class CharacterController2D : MonoBehaviour
 		}
 	}
 
-
-	public void Move(float move, bool crouch, bool jump)
+	//Function for the movement of the player; Crouching and jumping is turned off if not specified otherwise with a bool 'true'
+	public void Move(float move, bool crouch = false, bool jump = false)
 	{
 		// If crouching, check to see if the character can stand up
 		if (!crouch)
