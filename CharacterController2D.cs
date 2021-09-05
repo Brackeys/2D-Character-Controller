@@ -4,20 +4,31 @@ using UnityEngine.Events;
 public class CharacterController2D : MonoBehaviour
 {
 	[SerializeField] private float m_JumpForce = 400f;							// Amount of force added when the player jumps.
+	[SerializeField] private float validJumps = 3f;
 	[Range(0, 1)] [SerializeField] private float m_CrouchSpeed = .36f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
 	[Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;	// How much to smooth out the movement
 	[SerializeField] private bool m_AirControl = false;							// Whether or not a player can steer while jumping;
 	[SerializeField] private LayerMask m_WhatIsGround;							// A mask determining what is ground to the character
 	[SerializeField] private Transform m_GroundCheck;							// A position marking where to check if the player is grounded.
 	[SerializeField] private Transform m_CeilingCheck;							// A position marking where to check for ceilings
+	[SerializeField] private Transform m_LeftCheck;
+	[SerializeField] private Transform m_RightCheck;
 	[SerializeField] private Collider2D m_CrouchDisableCollider;				// A collider that will be disabled when crouching
 
 	const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
 	private bool m_Grounded;            // Whether or not the player is grounded.
 	const float k_CeilingRadius = .2f; // Radius of the overlap circle to determine if the player can stand up
+	const float k_LeftRadius = .2f;
+	const float k_RightRadius = .2f;
+	// private bool IsNextToWall;
+	private bool m_WallOnLeft;
+	private bool m_WallOnRight;
+	private float remainedJumps = 3f;
 	private Rigidbody2D m_Rigidbody2D;
 	private bool m_FacingRight = true;  // For determining which way the player is currently facing.
 	private Vector3 m_Velocity = Vector3.zero;
+
+	// private bool m_IsFlipped = false;
 
 	[Header("Events")]
 	[Space]
@@ -58,6 +69,33 @@ public class CharacterController2D : MonoBehaviour
 					OnLandEvent.Invoke();
 			}
 		}
+
+		m_WallOnLeft = false;
+		m_WallOnRight = false;
+
+		Collider2D[] LeftColliders = Physics2D.OverlapCircleAll(m_LeftCheck.position, k_LeftRadius, m_WhatIsGround);
+		for (int i = 0; i < LeftColliders.Length; i++)
+		{
+			if (LeftColliders[i].gameObject != gameObject)
+			{
+				m_WallOnLeft = true;
+				if (!wasGrounded)
+					OnLandEvent.Invoke();
+			}
+		}
+
+
+		Collider2D[] RightColliders = Physics2D.OverlapCircleAll(m_RightCheck.position, k_RightRadius, m_WhatIsGround);
+		for (int i = 0; i < RightColliders.Length; i++)
+		{
+			if (RightColliders[i].gameObject != gameObject)
+			{
+				m_WallOnRight = true;
+				if (!wasGrounded)
+					OnLandEvent.Invoke();
+			}
+		}
+
 	}
 
 
@@ -123,12 +161,34 @@ public class CharacterController2D : MonoBehaviour
 				Flip();
 			}
 		}
+
+
+		if (m_FacingRight && jump){
+			// do nothin
+		} else if (!m_FacingRight && jump && (m_WallOnRight || m_WallOnLeft)){
+			m_WallOnRight = !m_WallOnRight;
+			m_WallOnLeft = !m_WallOnLeft;
+		}
+
+
 		// If the player should jump...
 		if (m_Grounded && jump)
 		{
 			// Add a vertical force to the player.
 			m_Grounded = false;
+			remainedJumps = validJumps - 1f;
 			m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
+		} 
+
+		else if (m_WallOnLeft && jump){
+			remainedJumps = validJumps - 1f;
+			m_Rigidbody2D.AddForce(new Vector2(m_JumpForce/2, m_JumpForce));
+		} else if (m_WallOnRight && jump){
+			remainedJumps = validJumps - 1f;
+			m_Rigidbody2D.AddForce(new Vector2((m_JumpForce/2)* -1, m_JumpForce));
+		} else if (jump && remainedJumps > 0) {
+			m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
+			remainedJumps -= 1;
 		}
 	}
 
