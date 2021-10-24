@@ -5,6 +5,7 @@ public class CharacterController2D : MonoBehaviour
 {
 	[SerializeField] private float m_JumpForce = 400f;							// Amount of force added when the player jumps.
 	[Range(0, 1)] [SerializeField] private float m_CrouchSpeed = .36f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
+	[Range(1, 10)] [SerializeField] private float m_SprintSpeed = 3f;         // Amount of maxSpeed applied to sprinting movement. x1 to x10 speed;
 	[Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;	// How much to smooth out the movement
 	[SerializeField] private bool m_AirControl = false;							// Whether or not a player can steer while jumping;
 	[SerializeField] private LayerMask m_WhatIsGround;							// A mask determining what is ground to the character
@@ -29,6 +30,9 @@ public class CharacterController2D : MonoBehaviour
 
 	public BoolEvent OnCrouchEvent;
 	private bool m_wasCrouching = false;
+	
+	public BoolEvent OnSprintEvent;
+	private bool m_wasSprinting = false;
 
 	private void Awake()
 	{
@@ -61,7 +65,7 @@ public class CharacterController2D : MonoBehaviour
 	}
 
 
-	public void Move(float move, bool crouch, bool jump)
+	public void Move(float move, bool crouch, bool jump, bool sprint)
 	{
 		// If crouching, check to see if the character can stand up
 		if (!crouch)
@@ -76,6 +80,25 @@ public class CharacterController2D : MonoBehaviour
 		//only control the player if grounded or airControl is turned on
 		if (m_Grounded || m_AirControl)
 		{
+		
+			// If sprinting
+			if (sprint)
+			{
+				if (!m_wasSprinting)
+				{
+					m_wasSprinting = true;
+					OnSprintEvent.Invoke(true);
+				}
+					move *= m_SprintSpeed;
+			}
+			else
+			{
+				if (m_wasSprinting)
+				{
+				    m_wasSprinting = false;
+				    OnCrouchEvent.Invoke(false);
+				}
+			}
 
 			// If crouching
 			if (crouch)
